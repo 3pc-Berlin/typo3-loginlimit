@@ -4,6 +4,9 @@ enableFrontend = 1
 # cat=basic; type=boolean; label=Backend: Enable login limit for Backend.
 enableBackend = 1
 
+# cat=basic; type=boolean; label=IP: Disable Check for IP. If active only Username will be checked
+disableIpCheck = 0
+
 # cat=basic; type=boolean; label=Clean up at login: Enable clean up expired entries at login, alternatively a scheduler task can be set-up.
 enableCleanUpAtLogin = 1
 
