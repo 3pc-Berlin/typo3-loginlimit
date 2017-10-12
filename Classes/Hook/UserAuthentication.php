@@ -82,12 +82,12 @@ class UserAuthentication {
 
 			$loginAttempts = $this->getLoginAttemptRepository()->countLoginAttemptsByIp($ip, $this->settings['findtime']['value']);
 			if (($loginAttempts >= $this->settings['maxretry']['value']) && !($this->settings['disableIpCheck']['value'])) {
-				$this->ban($ip, '');
+				$this->ban($ip, null);
 			}
 
 			$loginAttempts = $this->getLoginAttemptRepository()->countLoginAttemptsByUsername($username, $this->settings['findtime']['value']);
 			if ($loginAttempts >= $this->settings['maxretry']['value']) {
-				$this->ban('', $username);
+				$this->ban(null, $username);
 			}
 
 			if ($this->settings['delayLogin']['value']) {
