@@ -78,20 +78,23 @@ class UserAuthentication {
 			$loginData = $params['pObj']->getLoginFormData();
 			$ip = GeneralUtility::getIndpEnv('REMOTE_ADDR');
 			$username = $loginData['uname'];
-			$this->logLoginAttempt($ip, $username);
+			// check if username filled and prevent the empty username in db
+			if($username != "") {
+				$this->logLoginAttempt($ip, $username);
 
-			$loginAttempts = $this->getLoginAttemptRepository()->countLoginAttemptsByIp($ip, $this->settings['findtime']['value']);
-			if (($loginAttempts >= $this->settings['maxretry']['value']) && !($this->settings['disableIpCheck']['value'])) {
-				$this->ban($ip, null);
-			}
+				$loginAttempts = $this->getLoginAttemptRepository()->countLoginAttemptsByIp($ip, $this->settings['findtime']['value']);
+				if (($loginAttempts >= $this->settings['maxretry']['value']) && !($this->settings['disableIpCheck']['value'])) {
+					$this->ban($ip, null);
+				}
 
-			$loginAttempts = $this->getLoginAttemptRepository()->countLoginAttemptsByUsername($username, $this->settings['findtime']['value']);
-			if ($loginAttempts >= $this->settings['maxretry']['value']) {
-				$this->ban(null, $username);
-			}
+				$loginAttempts = $this->getLoginAttemptRepository()->countLoginAttemptsByUsername($username, $this->settings['findtime']['value']);
+				if ($loginAttempts >= $this->settings['maxretry']['value']) {
+					$this->ban(null, $username);
+				}
 
-			if ($this->settings['delayLogin']['value']) {
-				sleep(min($loginAttempts, 10));
+				if ($this->settings['delayLogin']['value']) {
+					sleep(min($loginAttempts, 10));
+				}
 			}
 		}
 	}
