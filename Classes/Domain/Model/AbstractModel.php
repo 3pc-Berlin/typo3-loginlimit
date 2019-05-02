@@ -1,4 +1,5 @@
 <?php
+
 namespace WebentwicklerAt\Loginlimit\Domain\Model;
 
 /**
@@ -14,83 +15,91 @@ namespace WebentwicklerAt\Loginlimit\Domain\Model;
  * The TYPO3 project - inspiring people to share!
  */
 
+use TYPO3\CMS\Extbase\DomainObject\AbstractEntity;
+
 /**
  * Abstract model
  *
  * @author Gernot Leitgab <typo3@webentwickler.at>
  */
-abstract class AbstractModel extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity {
-	/**
-	 * Constructor
-	 *
-	 */
-	public function __construct() {
-		$this->pid = 0;
-	}
+abstract class AbstractModel extends AbstractEntity
+{
+    /**
+     * Timestamp
+     *
+     * @var \DateTime
+     */
+    protected $tstamp;
 
-	/**
-	 * Timestamp
-	 *
-	 * @var \DateTime
-	 */
-	protected $tstamp;
+    /**
+     * @var string
+     */
+    protected $ip;
 
-	/**
-	 * @param \DateTime $tstamp
-	 * @return void
-	 */
-	public function setTstamp($tstamp) {
-		$this->tstamp = $tstamp;
-	}
+    /**
+     * @var string
+     */
+    protected $username;
 
-	/**
-	 * @return \DateTime
-	 */
-	public function getTstamp() {
-		return $this->tstamp;
-	}
+    public function __construct()
+    {
+        $this->pid = 0;
+    }
 
-	/**
-	 * IP
-	 *
-	 * @var string
-	 */
-	protected $ip;
 
-	/**
-	 * @param string $ip
-	 * @return void
-	 */
-	public function setIp($ip) {
-		$this->ip = $ip;
-	}
+    /**
+     * @return \DateTime
+     */
+    public function getTstamp()
+    {
+        return $this->tstamp;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getIp() {
-		return $this->ip;
-	}
 
-	/**
-	 * Username
-	 *
-	 * @var string
-	 */
-	protected $username;
+    /**
+     * @param \DateTime $tstamp
+     * @return void
+     */
+    public function setTstamp($tstamp)
+    {
+        $this->tstamp = $tstamp;
+    }
 
-	/**
-	 * @param string $username
-	 * @return void
-	 */
-	public function setUsername($username) {
-		$this->username = $username;
-	}
 
-	/**
-	 * @return string
-	 */
-	public function getUsername() {
-		return $this->username;
-	}
+    /**
+     * @return string
+     */
+    public function getIp()
+    {
+        return $this->ip;
+    }
+
+
+    /**
+     * @param string $ip
+     * @return void
+     */
+    public function setIp($ip)
+    {
+        $this->ip = $ip;
+    }
+
+
+    /**
+     * @return string
+     */
+    public function getUsername()
+    {
+        return $this->username;
+    }
+
+
+    /**
+     * @param string $username
+     * @return void
+     */
+    public function setUsername($username)
+    {
+        $this->username = $username;
+    }
 }

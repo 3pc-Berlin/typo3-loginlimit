@@ -1,4 +1,5 @@
 <?php
+
 namespace WebentwicklerAt\Loginlimit\Service;
 
 /**
@@ -14,164 +15,187 @@ namespace WebentwicklerAt\Loginlimit\Service;
  * The TYPO3 project - inspiring people to share!
  */
 
-use \TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Object\ObjectManager;
+use TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility;
+use TYPO3\CMS\Frontend\Page\PageRepository;
+use TYPO3\CMS\Sv\AbstractAuthenticationService;
+use WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository;
+use WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository;
+use WebentwicklerAt\Loginlimit\Service\CleanUpService;
 
 /**
  * Service avoids authentication after ban
  *
  * @author Gernot Leitgab <typo3@webentwickler.at>
  */
-class AuthenticationService extends \TYPO3\CMS\Sv\AbstractAuthenticationService {
-	/**
-	 * Object manager
-	 *
-	 * @var \TYPO3\CMS\Extbase\Object\ObjectManagerInterface
-	 */
-	protected $objectManager;
+class AuthenticationService extends AbstractAuthenticationService
+{
+    /**
+     * @var \TYPO3\CMS\Extbase\Object\ObjectManagerInterface
+     */
+    protected $objectManager;
 
-	/**
-	 * Repository for login attempt
-	 *
-	 * @var \WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository
-	 */
-	protected $loginAttemptRepository;
+    /**
+     * Repository for login attempt
+     *
+     * @var \WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository
+     */
+    protected $loginAttemptRepository;
 
-	/**
-	 * Repository for ban
-	 *
-	 * @var \WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository
-	 */
-	protected $banRepository;
+    /**
+     * Repository for ban
+     *
+     * @var \WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository
+     */
+    protected $banRepository;
 
-	/**
-	 * Extension manager settings
-	 *
-	 * @var array
-	 */
-	protected $settings;
+    /**
+     * Extension manager settings
+     *
+     * @var array
+     */
+    protected $settings;
 
-	/**
-	 * Checks if service is available
-	 * Instantiate required objects
-	 *
-	 * @return boolean
-	 */
-	public function init() {
-		// in frontend TCA is not loaded
-		if (TYPO3_MODE === 'FE') {
-			if ($GLOBALS['TCA'] === NULL) {
-				\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::loadBaseTca(FALSE);
-			}
-			if (!$GLOBALS['TSFE']->sys_page instanceof \TYPO3\CMS\Frontend\Page\PageRepository) {
-				$GLOBALS['TSFE']->sys_page = GeneralUtility::makeInstance('TYPO3\\CMS\\Frontend\\Page\\PageRepository');
-			}
-		}
 
-		$this->objectManager = GeneralUtility::makeInstance('TYPO3\\CMS\\Extbase\\Object\\ObjectManager');
-		$configurationUtility = $this->objectManager->get('TYPO3\\CMS\\Extensionmanager\\Utility\\ConfigurationUtility');
-		$this->settings = $configurationUtility->getCurrentConfiguration('loginlimit');
+    /**
+     * Checks if service is available
+     * Instantiate required objects
+     *
+     * @return boolean
+     */
+    public function init()
+    {
+        // in frontend TCA is not loaded
+        if (TYPO3_MODE === 'FE') {
+            if ($GLOBALS['TCA'] === null) {
+                ExtensionManagementUtility::loadBaseTca(false);
+            }
+            if (!$GLOBALS['TSFE']->sys_page instanceof PageRepository) {
+                $GLOBALS['TSFE']->sys_page = GeneralUtility::makeInstance(PageRepository::class);
+            }
+        }
 
-		if ($this->settings['enableCleanUpAtLogin']['value']) {
-			$cleanUpService = $this->objectManager->get('WebentwicklerAt\\Loginlimit\\Service\\CleanUpService');
-			$cleanUpService->deleteExpiredEntries();
-		}
+        $this->objectManager  = GeneralUtility::makeInstance(ObjectManager::class);
+        $configurationUtility = $this->objectManager->get(ConfigurationUtility::class);
+        $this->settings       = $configurationUtility->getCurrentConfiguration('loginlimit');
 
-		return TRUE;
-	}
+        if ($this->settings['enableCleanUpAtLogin']['value']) {
+            $cleanUpService = $this->objectManager->get(CleanUpService::class);
+            $cleanUpService->deleteExpiredEntries();
+        }
 
-	/**
-	 * Returns invalid user after ban
-	 *
-	 * @return mixed User array or FALSE
-	 */
-	public function getUser() {
-		if ($this->isLoginlimitActive() && $this->isBanned()) {
-			$GLOBALS['TYPO3_CONF_VARS']['SVCONF']['auth']['setup'][$this->authInfo['loginType'] . '_alwaysAuthUser'] = FALSE;
-			return array('uid' => 0);
-		}
+        return true;
+    }
 
-		return FALSE;
-	}
 
-	/**
-	 * Avoids call of further authentication mechanisms after ban
-	 *
-	 * @param array $user Data of user.
-	 * @return integer >= 200: User authenticated successfully.
-	 *                         No more checking is needed by other auth services.
-	 *                 >= 100: User not authenticated; this service is not responsible.
-	 *                         Other auth services will be asked.
-	 *                 > 0:    User authenticated successfully.
-	 *                         Other auth services will still be asked.
-	 *                 <= 0:   Authentication failed, no more checking needed
-	 *                         by other auth services.
-	 */
-	public function authUser(array $user) {
-		$OK = 100;
+    /**
+     * Returns invalid user after ban.
+     *
+     * @return mixed User array or FALSE
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException
+     */
+    public function getUser()
+    {
+        if ($this->isLoginlimitActive() && $this->isBanned()) {
+            $GLOBALS['TYPO3_CONF_VARS']['SVCONF']['auth']['setup'][$this->authInfo['loginType'] . '_alwaysAuthUser'] = false;
+            return array('uid' => 0);
+        }
 
-		if ($this->isLoginlimitActive() && $this->isBanned()) {
-			$OK = -1;
-		}
+        return false;
+    }
 
-		return $OK;
-	}
 
-	/**
-	 * Returns if login limit is active based on login type and settings
-	 *
-	 * @return boolean
-	 */
-	protected function isLoginlimitActive() {
-		if (($this->authInfo['loginType'] === 'FE' && $this->settings['enableFrontend']['value'] ||
-			$this->authInfo['loginType'] === 'BE' && $this->settings['enableBackend']['value'])
-		) {
-			return TRUE;
-		}
+    /**
+     * Returns if login limit is active based on login type and settings
+     *
+     * @return boolean
+     */
+    protected function isLoginlimitActive()
+    {
+        if (($this->authInfo['loginType'] === 'FE' && $this->settings['enableFrontend']['value'] ||
+            $this->authInfo['loginType'] === 'BE' && $this->settings['enableBackend']['value'])
+        ) {
+            return true;
+        }
 
-		return FALSE;
-	}
+        return false;
+    }
 
-	/**
-	 * Returns if IP or username is banned
-	 *
-	 * @return boolean
-	 */
-	protected function isBanned() {
-		$ip = GeneralUtility::getIndpEnv('REMOTE_ADDR');
-		$username = $this->login['uname'];
 
-		if ($this->getBanRepository()->findActiveBan($ip, $username, $this->settings['bantime']['value'])) {
-			return TRUE;
-		}
+    /**
+     * Returns if IP or username is banned
+     *
+     * @return boolean
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException
+     */
+    protected function isBanned()
+    {
+        $ip = GeneralUtility::getIndpEnv('REMOTE_ADDR');
+        $username = $this->login['uname'];
 
-		return FALSE;
-	}
+        if ($this->getBanRepository()->findActiveBan($ip, $username, $this->settings['bantime']['value'])) {
+            return true;
+        }
 
-	/**
-	 * Helper to get login attempt repository
-	 * Only instantiate object if required
-	 *
-	 * @return \WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository
-	 */
-	protected function getLoginAttemptRepository() {
-		if (!isset($this->loginAttemptRepository)) {
-			$this->loginAttemptRepository = $this->objectManager->get('WebentwicklerAt\\Loginlimit\\Domain\\Repository\\LoginAttemptRepository');
-		}
+        return false;
+    }
 
-		return $this->loginAttemptRepository;
-	}
 
-	/**
-	 * Helper to get ban repository
-	 * Only instantiate object if required
-	 *
-	 * @return \WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository
-	 */
-	protected function getBanRepository() {
-		if (!isset($this->banRepository)) {
-			$this->banRepository = $this->objectManager->get('WebentwicklerAt\\Loginlimit\\Domain\\Repository\\BanRepository');
-		}
+    /**
+     * Helper to get ban repository
+     * Only instantiate object if required
+     *
+     * @return \WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository
+     */
+    protected function getBanRepository()
+    {
+        if (!isset($this->banRepository)) {
+            $this->banRepository = $this->objectManager->get(BanRepository::class);
+        }
 
-		return $this->banRepository;
-	}
+        return $this->banRepository;
+    }
+
+
+    /**
+     * Avoids call of further authentication mechanisms after ban
+     *
+     * @param array $user Data of user.
+     * @return integer >= 200: User authenticated successfully.
+     *                         No more checking is needed by other auth services.
+     *                 >= 100: User not authenticated; this service is not responsible.
+     *                         Other auth services will be asked.
+     *                 > 0:    User authenticated successfully.
+     *                         Other auth services will still be asked.
+     *                 <= 0:   Authentication failed, no more checking needed
+     *                         by other auth services.
+     */
+    public function authUser(array $user)
+    {
+        $OK = 100;
+
+        if ($this->isLoginlimitActive() && $this->isBanned()) {
+            $OK = -1;
+        }
+
+        return $OK;
+    }
+
+
+    /**
+     * Helper to get login attempt repository
+     * Only instantiate object if required
+     *
+     * @return \WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository
+     */
+    protected function getLoginAttemptRepository()
+    {
+        if (!isset($this->loginAttemptRepository)) {
+            $this->loginAttemptRepository = $this->objectManager->get(LoginAttemptRepository::class);
+        }
+
+        return $this->loginAttemptRepository;
+    }
 }

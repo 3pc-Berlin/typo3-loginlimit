@@ -1,4 +1,5 @@
 <?php
+
 namespace WebentwicklerAt\Loginlimit\Hook;
 
 /**
@@ -15,6 +16,13 @@ namespace WebentwicklerAt\Loginlimit\Hook;
  */
 
 use \TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Object\ObjectManager;
+use TYPO3\CMS\Extbase\Persistence\PersistenceManagerInterface;
+use TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility;
+use WebentwicklerAt\Loginlimit\Domain\Model\Ban;
+use \WebentwicklerAt\Loginlimit\Domain\Model\LoginAttempt;
+use WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository;
+use WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository;
 
 /**
  * Post user look-up hook for \TYPO3\CMS\Core\Authentication\AbstractUserAuthentication
@@ -22,179 +30,206 @@ use \TYPO3\CMS\Core\Utility\GeneralUtility;
  *
  * @author Gernot Leitgab <typo3@webentwickler.at>
  */
-class UserAuthentication {
-	/**
-	 * Object manager
-	 *
-	 * @var \TYPO3\CMS\Extbase\Object\ObjectManagerInterface
-	 */
-	protected $objectManager;
+class UserAuthentication
+{
+    /**
+     * @var \TYPO3\CMS\Extbase\Object\ObjectManagerInterface
+     */
+    protected $objectManager;
 
-	/**
-	 * Persistence manager
-	 *
-	 * @var \TYPO3\CMS\Extbase\Persistence\PersistenceManagerInterface
-	 */
-	protected $persistenceManager;
+    /**
+     * @var \TYPO3\CMS\Extbase\Persistence\PersistenceManagerInterface
+     */
+    protected $persistenceManager;
 
-	/**
-	 * Repository for login attempt
-	 *
-	 * @var \WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository
-	 */
-	protected $loginAttemptRepository;
+    /**
+     * Repository for login attempt
+     *
+     * @var \WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository
+     */
+    protected $loginAttemptRepository;
 
-	/**
-	 * Repository for ban
-	 *
-	 * @var \WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository
-	 */
-	protected $banRepository;
+    /**
+     * Repository for ban
+     *
+     * @var \WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository
+     */
+    protected $banRepository;
 
-	/**
-	 * Extension manager settings
-	 *
-	 * @var array
-	 */
-	protected $settings;
+    /**
+     * Extension manager settings
+     *
+     * @var array
+     */
+    protected $settings;
 
-	/**
-	 * Constructor
-	 */
-	public function __construct() {
-		$this->objectManager = GeneralUtility::makeInstance('TYPO3\\CMS\\Extbase\\Object\\ObjectManager');
-		$configurationUtility = $this->objectManager->get('TYPO3\\CMS\\Extensionmanager\\Utility\\ConfigurationUtility');
-		$this->settings = $configurationUtility->getCurrentConfiguration('loginlimit');
-	}
 
-	/**
-	 * Method called by AbstractUserAuthentication
-	 *
-	 * @param array $params
-	 * @return void
-	 */
-	public function postUserLookUp(&$params) {
-		if ($this->isLoginlimitActive($params)) {
-			$loginData = $params['pObj']->getLoginFormData();
-			$ip = GeneralUtility::getIndpEnv('REMOTE_ADDR');
-			$username = $loginData['uname'];
-			// check if username filled and prevent the empty username in db
-			if($username != "") {
-				$this->logLoginAttempt($ip, $username);
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->objectManager = GeneralUtility::makeInstance(ObjectManager::class);
+        $configurationUtility = $this->objectManager->get(ConfigurationUtility::class);
+        $this->settings = $configurationUtility->getCurrentConfiguration('loginlimit');
+    }
 
-				$loginAttempts = $this->getLoginAttemptRepository()->countLoginAttemptsByIp($ip, $this->settings['findtime']['value']);
-				if (($loginAttempts >= $this->settings['maxretry']['value']) && !($this->settings['disableIpCheck']['value'])) {
-					$this->ban($ip, null);
-				}
 
-				$loginAttempts = $this->getLoginAttemptRepository()->countLoginAttemptsByUsername($username, $this->settings['findtime']['value']);
-				if ($loginAttempts >= $this->settings['maxretry']['value']) {
-					$this->ban(null, $username);
-				}
+    /**
+     * Method called by AbstractUserAuthentication
+     *
+     * @param array $params
+     * @return void
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\IllegalObjectTypeException
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\UnknownObjectException
+     */
+    public function postUserLookUp(&$params)
+    {
+        if ($this->isLoginlimitActive($params)) {
+            $loginData = $params['pObj']->getLoginFormData();
+            $ip = GeneralUtility::getIndpEnv('REMOTE_ADDR');
+            $username  = $loginData['uname'];
+            // check if username filled and prevent the empty username in db
+            if ($username != "") {
+                $this->logLoginAttempt($ip, $username);
 
-				if ($this->settings['delayLogin']['value']) {
-					sleep(min($loginAttempts, 10));
-				}
-			}
-		}
-	}
+                $loginAttempts = $this->getLoginAttemptRepository()->countLoginAttemptsByIp(
+                    $ip,
+                    $this->settings['findtime']['value']
+                );
+                if (($loginAttempts >= $this->settings['maxretry']['value']) &&
+                    !($this->settings['disableIpCheck']['value'])
+                ) {
+                    $this->ban($ip, null);
+                }
 
-	/**
-	 * Returns if login limit is active based on login type and settings
-	 *
-	 * @param array $params
-	 * @return boolean
-	 */
-	protected function isLoginlimitActive(&$params) {
-		if ($params['pObj']->loginFailure &&
-			($params['pObj']->loginType === 'FE' && $this->settings['enableFrontend']['value'] ||
-				$params['pObj']->loginType === 'BE' && $this->settings['enableBackend']['value'])
-		) {
-			return TRUE;
-		}
+                $loginAttempts = $this->getLoginAttemptRepository()->countLoginAttemptsByUsername(
+                    $username,
+                    $this->settings['findtime']['value']
+                );
+                if ($loginAttempts >= $this->settings['maxretry']['value']) {
+                    $this->ban(null, $username);
+                }
 
-		return FALSE;
-	}
+                if ($this->settings['delayLogin']['value']) {
+                    sleep(min($loginAttempts, 10));
+                }
+            }
+        }
+    }
 
-	/**
-	 * Logs login attempt for IP and username
-	 *
-	 * @param string $ip
-	 * @param string $username
-	 * @return void
-	 */
-	protected function logLoginAttempt($ip, $username) {
-		$loginAttempt = $this->objectManager->get('WebentwicklerAt\\Loginlimit\\Domain\\Model\\LoginAttempt');
-		$loginAttempt->setIp($ip);
-		$loginAttempt->setUsername($username);
 
-		$this->getLoginAttemptRepository()->add($loginAttempt);
-		$this->getPersistenceManager()->persistAll();
-	}
+    /**
+     * Returns if login limit is active based on login type and settings.
+     *
+     * @param array $params
+     * @return boolean
+     */
+    protected function isLoginlimitActive(&$params)
+    {
+        if ($params['pObj']->loginFailure &&
+            ($params['pObj']->loginType === 'FE' && $this->settings['enableFrontend']['value'] ||
+                $params['pObj']->loginType === 'BE' && $this->settings['enableBackend']['value'])
+        ) {
+            return true;
+        }
 
-	/**
-	 * Bans IP and username
-	 *
-	 * @param string $ip
-	 * @param string $username
-	 * @return void
-	 */
-	protected function ban($ip, $username) {
-		$ban = $this->getBanRepository()->findBan($ip, $username);
-		if ($ban === NULL) {
-			$ban = $this->objectManager->get('WebentwicklerAt\\Loginlimit\\Domain\\Model\\Ban');
-			$ban->setIp($ip);
-			$ban->setUsername($username);
+        return false;
+    }
 
-			$this->getBanRepository()->add($ban);
-		}
-		else {
-			$ban->setTstamp(new \DateTime('@' . $GLOBALS['EXEC_TIME']));
-			$this->getBanRepository()->update($ban);
-		}
 
-		$this->getPersistenceManager()->persistAll();
-	}
+    /**
+     * Logs login attempt for IP and username.
+     *
+     * @param string $ip
+     * @param string $username
+     * @return void
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\IllegalObjectTypeException
+     */
+    protected function logLoginAttempt($ip, $username)
+    {
+        $loginAttempt = $this->objectManager->get(LoginAttempt::class);
+        $loginAttempt->setIp($ip);
+        $loginAttempt->setUsername($username);
 
-	/**
-	 * Helper to get persistence manager
-	 * Only instantiate if required
-	 *
-	 * @return \TYPO3\CMS\Extbase\Persistence\PersistenceManagerInterface
-	 */
-	protected function getPersistenceManager() {
-		if (!isset($this->persistenceManager)) {
-			$this->persistenceManager = $this->objectManager->get('TYPO3\\CMS\\Extbase\\Persistence\\PersistenceManagerInterface');
-		}
+        $this->getLoginAttemptRepository()->add($loginAttempt);
+        $this->getPersistenceManager()->persistAll();
+    }
 
-		return $this->persistenceManager;
-	}
 
-	/**
-	 * Helper to get login attempt repository
-	 * Only instantiate object if required
-	 *
-	 * @return \WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository
-	 */
-	protected function getLoginAttemptRepository() {
-		if (!isset($this->loginAttemptRepository)) {
-			$this->loginAttemptRepository = $this->objectManager->get('WebentwicklerAt\\Loginlimit\\Domain\\Repository\\LoginAttemptRepository');
-		}
+    /**
+     * Helper to get login attempt repository
+     * Only instantiate object if required
+     *
+     * @return \WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository
+     */
+    protected function getLoginAttemptRepository()
+    {
+        if (!isset($this->loginAttemptRepository)) {
+            $this->loginAttemptRepository = $this->objectManager->get(LoginAttemptRepository::class);
+        }
 
-		return $this->loginAttemptRepository;
-	}
+        return $this->loginAttemptRepository;
+    }
 
-	/**
-	 * Helper to get ban repository
-	 * Only instantiate object if required
-	 *
-	 * @return \WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository
-	 */
-	protected function getBanRepository() {
-		if (!isset($this->banRepository)) {
-			$this->banRepository = $this->objectManager->get('WebentwicklerAt\\Loginlimit\\Domain\\Repository\\BanRepository');
-		}
 
-		return $this->banRepository;
-	}
+    /**
+     * Helper to get persistence manager
+     * Only instantiate if required
+     *
+     * @return \TYPO3\CMS\Extbase\Persistence\PersistenceManagerInterface
+     */
+    protected function getPersistenceManager()
+    {
+        if (!isset($this->persistenceManager)) {
+            $this->persistenceManager = $this->objectManager->get(PersistenceManagerInterface::class);
+        }
+
+        return $this->persistenceManager;
+    }
+
+
+    /**
+     * Bans IP and username
+     *
+     * @param string $ip
+     * @param string $username
+     * @return void
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\IllegalObjectTypeException
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\UnknownObjectException
+     * @throws \Exception
+     */
+    protected function ban($ip, $username)
+    {
+        $ban = $this->getBanRepository()->findBan($ip, $username);
+        if ($ban === null) {
+            $ban = $this->objectManager->get(Ban::class);
+            $ban->setIp($ip);
+            $ban->setUsername($username);
+
+            $this->getBanRepository()->add($ban);
+        } else {
+            $ban->setTstamp(new \DateTime('@' . $GLOBALS['EXEC_TIME']));
+            $this->getBanRepository()->update($ban);
+        }
+
+        $this->getPersistenceManager()->persistAll();
+    }
+
+
+    /**
+     * Helper to get ban repository
+     * Only instantiate object if required
+     *
+     * @return \WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository
+     */
+    protected function getBanRepository()
+    {
+        if (!isset($this->banRepository)) {
+            $this->banRepository = $this->objectManager->get(BanRepository::class);
+        }
+
+        return $this->banRepository;
+    }
 }
