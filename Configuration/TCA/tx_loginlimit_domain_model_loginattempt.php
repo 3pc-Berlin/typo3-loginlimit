@@ -4,7 +4,7 @@ return [
         'title' => 'LLL:EXT:loginlimit/Resources/Private/Language/locallang.xlf:tx_loginlimit_domain_model_loginattempt',
         'label' => 'tstamp',
         'label_userFunc' => 'WebentwicklerAt\\Loginlimit\\Userfuncs\\Tca->loginAttemptTitle',
-        'iconfile' => \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extRelPath('loginlimit') . 'Resources/Public/Icons/tx_loginlimit_domain_model_loginattempt.png',
+        'iconfile' => 'EXT:loginlimit/Resources/Public/Icons/tx_loginlimit_domain_model_loginattempt.png',
         'default_sortby' => 'tstamp DESC',
         'tstamp' => 'tstamp',
         'rootLevel' => 1,
@@ -20,6 +20,7 @@ return [
             'label' => 'LLL:EXT:loginlimit/Resources/Private/Language/locallang.xlf:tstamp',
             'config' => [
                 'type' => 'input',
+                'renderType' => 'inputDateTime',
                 'size' => '13',
                 'eval' => 'datetime',
                 'readOnly' => true
