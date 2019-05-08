@@ -1,4 +1,5 @@
 <?php
+
 namespace WebentwicklerAt\Loginlimit\Domain\Repository;
 
 /**
@@ -19,67 +20,75 @@ namespace WebentwicklerAt\Loginlimit\Domain\Repository;
  *
  * @author Gernot Leitgab <typo3@webentwickler.at>
  */
-class BanRepository extends AbstractRepository {
-	/**
-	 * Finds first ban based on IP or username
-	 *
-	 * @param string $ip
-	 * @param string $username
-	 * @return object
-	 */
-	public function findBan($ip, $username) {
-		$query = $this->createQuery();
+class BanRepository extends AbstractRepository
+{
+    /**
+     * Finds first ban based on IP or username
+     *
+     * @param string $ip
+     * @param string $username
+     * @return object
+     */
+    public function findBan($ip, $username)
+    {
+        $query = $this->createQuery();
 
-		$constraints = $query->logicalOr(
-			$query->equals('ip', $ip),
-			$query->equals('username', $username)
-		);
+        $constraints = $query->logicalOr(
+            $query->equals('ip', $ip),
+            $query->equals('username', $username)
+        );
 
-		$result = $query->matching($constraints)->setLimit(1)->execute();
-		return $result->getFirst();
-	}
+        $result = $query->matching($constraints)->setLimit(1)->execute();
+        return $result->getFirst();
+    }
 
-	/**
-	 * Finds first active (not expired) ban based on IP or username
-	 *
-	 * @param string $ip
-	 * @param string $username
-	 * @param integer $bantime
-	 * @return object
-	 */
-	public function findActiveBan($ip, $username, $bantime) {
-		$query = $this->createQuery();
 
-		$constraints = $query->logicalOr(
-			$query->equals('ip', $ip),
-			$query->equals('username', $username)
-		);
-		if ($bantime >= 0) {
-			$constraints = $query->logicalAnd(
-				$constraints,
-				$query->greaterThanOrEqual('tstamp', $GLOBALS['EXEC_TIME'] - (int)$bantime)
-			);
-		}
+    /**
+     * Finds first active (not expired) ban based on IP or username
+     *
+     * @param string $ip
+     * @param string $username
+     * @param integer $bantime
+     * @return object
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException
+     */
+    public function findActiveBan($ip, $username, $bantime)
+    {
+        $query = $this->createQuery();
 
-		$result = $query->matching($constraints)->setLimit(1)->execute();
-		return $result->getFirst();
-	}
+        $constraints = $query->logicalOr(
+            $query->equals('ip', $ip),
+            $query->equals('username', $username)
+        );
+        if ($bantime >= 0) {
+            $constraints = $query->logicalAnd(
+                $constraints,
+                $query->greaterThanOrEqual('tstamp', $GLOBALS['EXEC_TIME'] - (int)$bantime)
+            );
+        }
 
-	/**
-	 * Finds expired bans
-	 *
-	 * @param integer $bantime
-	 * @return array|\TYPO3\CMS\Extbase\Persistence\QueryResultInterface
-	 */
-	public function findExpired($bantime) {
-		if ($bantime >= 0) {
-			$query = $this->createQuery();
+        $result = $query->matching($constraints)->setLimit(1)->execute();
+        return $result->getFirst();
+    }
 
-			$constraints = $query->lessThan('tstamp', $GLOBALS['EXEC_TIME'] - (int)$bantime);
 
-			return $query->matching($constraints)->execute();
-		}
+    /**
+     * Finds expired bans
+     *
+     * @param integer $bantime
+     * @return array|\TYPO3\CMS\Extbase\Persistence\QueryResultInterface
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException
+     */
+    public function findExpired($bantime)
+    {
+        if ($bantime >= 0) {
+            $query = $this->createQuery();
 
-		return array();
-	}
+            $constraints = $query->lessThan('tstamp', $GLOBALS['EXEC_TIME'] - (int)$bantime);
+
+            return $query->matching($constraints)->execute();
+        }
+
+        return array();
+    }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace WebentwicklerAt\Loginlimit\Domain\Model;
 
 /**
@@ -19,6 +20,6 @@ namespace WebentwicklerAt\Loginlimit\Domain\Model;
  *
  * @author Gernot Leitgab <typo3@webentwickler.at>
  */
-class LoginAttempt extends AbstractModel {
-
+class LoginAttempt extends AbstractModel
+{
 }

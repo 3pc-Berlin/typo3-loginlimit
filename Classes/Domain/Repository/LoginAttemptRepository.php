@@ -1,4 +1,5 @@
 <?php
+
 namespace WebentwicklerAt\Loginlimit\Domain\Repository;
 
 /**
@@ -19,53 +20,63 @@ namespace WebentwicklerAt\Loginlimit\Domain\Repository;
  *
  * @author Gernot Leitgab <typo3@webentwickler.at>
  */
-class LoginAttemptRepository extends AbstractRepository {
-	/**
-	 * Counts active (not expired) login attempts based on IP
-	 *
-	 * @param string $ip
-	 * @param integer $findtime
-	 * @return integer
-	 */
-	public function countLoginAttemptsByIp($ip, $findtime) {
-		$query = $this->createQuery();
+class LoginAttemptRepository extends AbstractRepository
+{
+    /**
+     * Counts active (not expired) login attempts based on IP
+     *
+     * @param string $ip
+     * @param integer $findtime
+     * @return integer
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException
+     */
+    public function countLoginAttemptsByIp($ip, $findtime)
+    {
+        $query = $this->createQuery();
 
-		$constraints = $query->logicalAnd(
-			$query->equals('ip', $ip),
-			$query->greaterThanOrEqual('tstamp', $GLOBALS['EXEC_TIME'] - (int)$findtime)
-		);
+        $constraints = $query->logicalAnd(
+            $query->equals('ip', $ip),
+            $query->greaterThanOrEqual('tstamp', $GLOBALS['EXEC_TIME'] - (int)$findtime)
+        );
 
-		return $query->matching($constraints)->execute()->count();
-	}
+        return $query->matching($constraints)->execute()->count();
+    }
 
-	/**
-	 * Counts active (not expired) login attempts based on username
-	 *
-	 * @param string $username
-	 * @return integer
-	 */
-	public function countLoginAttemptsByUsername($username, $findtime) {
-		$query = $this->createQuery();
 
-		$constraints = $query->logicalAnd(
-			$query->equals('username', $username),
-			$query->greaterThanOrEqual('tstamp', $GLOBALS['EXEC_TIME'] - (int)$findtime)
-		);
+    /**
+     * Counts active (not expired) login attempts based on username
+     *
+     * @param string $username
+     * @param $findtime
+     * @return integer
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException
+     */
+    public function countLoginAttemptsByUsername($username, $findtime)
+    {
+        $query = $this->createQuery();
 
-		return $query->matching($constraints)->execute()->count();
-	}
+        $constraints = $query->logicalAnd(
+            $query->equals('username', $username),
+            $query->greaterThanOrEqual('tstamp', $GLOBALS['EXEC_TIME'] - (int)$findtime)
+        );
 
-	/**
-	 * Finds expired login attempts
-	 *
-	 * @param integer $findtime
-	 * @return array|\TYPO3\CMS\Extbase\Persistence\QueryResultInterface
-	 */
-	public function findExpired($findtime) {
-		$query = $this->createQuery();
+        return $query->matching($constraints)->execute()->count();
+    }
 
-		$constraints = $query->lessThan('tstamp', $GLOBALS['EXEC_TIME'] - (int)$findtime);
 
-		return $query->matching($constraints)->execute();
-	}
+    /**
+     * Finds expired login attempts
+     *
+     * @param integer $findtime
+     * @return array|\TYPO3\CMS\Extbase\Persistence\QueryResultInterface
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException
+     */
+    public function findExpired($findtime)
+    {
+        $query = $this->createQuery();
+
+        $constraints = $query->lessThan('tstamp', $GLOBALS['EXEC_TIME'] - (int)$findtime);
+
+        return $query->matching($constraints)->execute();
+    }
 }

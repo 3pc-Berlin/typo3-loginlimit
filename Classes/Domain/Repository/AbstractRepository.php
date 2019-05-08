@@ -1,4 +1,5 @@
 <?php
+
 namespace WebentwicklerAt\Loginlimit\Domain\Repository;
 
 /**
@@ -14,20 +15,25 @@ namespace WebentwicklerAt\Loginlimit\Domain\Repository;
  * The TYPO3 project - inspiring people to share!
  */
 
+use TYPO3\CMS\Extbase\Persistence\Generic\Typo3QuerySettings;
+use TYPO3\CMS\Extbase\Persistence\Repository;
+
 /**
  * Abstract repository
  *
  * @author Gernot Leitgab <typo3@webentwickler.at>
  */
-abstract class AbstractRepository extends \TYPO3\CMS\Extbase\Persistence\Repository {
-	/**
-	 * Sets default query settings
-	 *
-	 * @return void
-	 */
-	public function initializeObject() {
-		$querySettings = $this->objectManager->get('TYPO3\\CMS\\Extbase\\Persistence\\Generic\\Typo3QuerySettings');
-		$querySettings->setStoragePageIds(array(0));
-		$this->setDefaultQuerySettings($querySettings);
-	}
+abstract class AbstractRepository extends Repository
+{
+    /**
+     * Sets default query settings
+     *
+     * @return void
+     */
+    public function initializeObject()
+    {
+        $querySettings = $this->objectManager->get(Typo3QuerySettings::class);
+        $querySettings->setStoragePageIds([0]);
+        $this->setDefaultQuerySettings($querySettings);
+    }
 }
