@@ -15,10 +15,11 @@ namespace WebentwicklerAt\Loginlimit\Service;
  * The TYPO3 project - inspiring people to share!
  */
 
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
-use TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility;
+//use TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility;
 use TYPO3\CMS\Frontend\Page\PageRepository;
 use TYPO3\CMS\Sv\AbstractAuthenticationService;
 use WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository;
@@ -78,8 +79,7 @@ class AuthenticationService extends AbstractAuthenticationService
         }
 
         $this->objectManager  = GeneralUtility::makeInstance(ObjectManager::class);
-        $configurationUtility = $this->objectManager->get(ConfigurationUtility::class);
-        $this->settings       = $configurationUtility->getCurrentConfiguration('loginlimit');
+        $this->settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('loginlimit');
 
         if ($this->settings['enableCleanUpAtLogin']['value']) {
             $cleanUpService = $this->objectManager->get(CleanUpService::class);
