@@ -20,7 +20,6 @@ use TYPO3\CMS\Core\SingletonInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManagerInterface;
 use TYPO3\CMS\Extbase\Persistence\PersistenceManagerInterface;
-//use TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility;
 use WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository;
 use WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository;
 
