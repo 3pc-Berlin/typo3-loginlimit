@@ -15,10 +15,11 @@ namespace WebentwicklerAt\Loginlimit\Service;
  * The TYPO3 project - inspiring people to share!
  */
 
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\SingletonInterface;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManagerInterface;
 use TYPO3\CMS\Extbase\Persistence\PersistenceManagerInterface;
-use TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility;
 use WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository;
 use WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository;
 
@@ -116,8 +117,7 @@ class CleanUpService implements SingletonInterface
      */
     public function initializeObject()
     {
-        $configurationUtility = $this->objectManager->get(ConfigurationUtility::class);
-        $this->settings = $configurationUtility->getCurrentConfiguration('loginlimit');
+        $this->settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('loginlimit');
     }
 
 

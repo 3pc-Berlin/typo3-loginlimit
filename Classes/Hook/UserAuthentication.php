@@ -15,12 +15,12 @@ namespace WebentwicklerAt\Loginlimit\Hook;
  * The TYPO3 project - inspiring people to share!
  */
 
-use \TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\Persistence\PersistenceManagerInterface;
-use TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility;
 use WebentwicklerAt\Loginlimit\Domain\Model\Ban;
-use \WebentwicklerAt\Loginlimit\Domain\Model\LoginAttempt;
+use WebentwicklerAt\Loginlimit\Domain\Model\LoginAttempt;
 use WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository;
 use WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository;
 
@@ -70,8 +70,7 @@ class UserAuthentication
     public function __construct()
     {
         $this->objectManager = GeneralUtility::makeInstance(ObjectManager::class);
-        $configurationUtility = $this->objectManager->get(ConfigurationUtility::class);
-        $this->settings = $configurationUtility->getCurrentConfiguration('loginlimit');
+        $this->settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('loginlimit');
     }
 
 
