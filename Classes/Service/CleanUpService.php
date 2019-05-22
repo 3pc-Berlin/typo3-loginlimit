@@ -145,7 +145,7 @@ class CleanUpService implements SingletonInterface
      */
     protected function deleteExpiredLoginAttempts()
     {
-        $findtime = $this->settings['findtime']['value'];
+        $findtime = $this->settings['findtime'];
         $expiredEntries = $this->loginAttemptRepository->findExpired($findtime);
         foreach ($expiredEntries as $expiredEntry) {
             $this->loginAttemptRepository->remove($expiredEntry);
@@ -162,7 +162,7 @@ class CleanUpService implements SingletonInterface
      */
     protected function deleteExpiredBans()
     {
-        $bantime = $this->settings['bantime']['value'];
+        $bantime = $this->settings['bantime'];
         if ($bantime >= 0) {
             $expiredEntries = $this->banRepository->findExpired($bantime);
             foreach ($expiredEntries as $expiredEntry) {
