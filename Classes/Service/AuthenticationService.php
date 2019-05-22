@@ -80,7 +80,7 @@ class AuthenticationService extends AbstractAuthenticationService
         $this->objectManager  = GeneralUtility::makeInstance(ObjectManager::class);
         $this->settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('loginlimit');
 
-        if ($this->settings['enableCleanUpAtLogin']['value']) {
+        if ($this->settings['enableCleanUpAtLogin']) {
             $cleanUpService = $this->objectManager->get(CleanUpService::class);
             $cleanUpService->deleteExpiredEntries();
         }
