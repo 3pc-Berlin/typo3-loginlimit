@@ -95,23 +95,23 @@ class UserAuthentication
 
                 $loginAttempts = $this->getLoginAttemptRepository()->countLoginAttemptsByIp(
                     $ip,
-                    $this->settings['findtime']['value']
+                    $this->settings['findtime']
                 );
-                if (($loginAttempts >= $this->settings['maxretry']['value']) &&
-                    !($this->settings['disableIpCheck']['value'])
+                if (($loginAttempts >= $this->settings['maxretry']) &&
+                    !($this->settings['disableIpCheck'])
                 ) {
                     $this->ban($ip, null);
                 }
 
                 $loginAttempts = $this->getLoginAttemptRepository()->countLoginAttemptsByUsername(
                     $username,
-                    $this->settings['findtime']['value']
+                    $this->settings['findtime']
                 );
-                if ($loginAttempts >= $this->settings['maxretry']['value']) {
+                if ($loginAttempts >= $this->settings['maxretry']) {
                     $this->ban(null, $username);
                 }
 
-                if ($this->settings['delayLogin']['value']) {
+                if ($this->settings['delayLogin']) {
                     sleep(min($loginAttempts, 10));
                 }
             }
@@ -128,8 +128,8 @@ class UserAuthentication
     protected function isLoginlimitActive(&$params)
     {
         if ($params['pObj']->loginFailure &&
-            ($params['pObj']->loginType === 'FE' && $this->settings['enableFrontend']['value'] ||
-                $params['pObj']->loginType === 'BE' && $this->settings['enableBackend']['value'])
+            ($params['pObj']->loginType === 'FE' && $this->settings['enableFrontend'] ||
+                $params['pObj']->loginType === 'BE' && $this->settings['enableBackend'])
         ) {
             return true;
         }
