@@ -80,7 +80,7 @@ class AuthenticationService extends AbstractAuthenticationService
         $this->objectManager  = GeneralUtility::makeInstance(ObjectManager::class);
         $this->settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('loginlimit');
 
-        if ($this->settings['enableCleanUpAtLogin']['value']) {
+        if ($this->settings['enableCleanUpAtLogin']) {
             $cleanUpService = $this->objectManager->get(CleanUpService::class);
             $cleanUpService->deleteExpiredEntries();
         }
@@ -113,8 +113,8 @@ class AuthenticationService extends AbstractAuthenticationService
      */
     protected function isLoginlimitActive()
     {
-        if (($this->authInfo['loginType'] === 'FE' && $this->settings['enableFrontend']['value'] ||
-            $this->authInfo['loginType'] === 'BE' && $this->settings['enableBackend']['value'])
+        if (($this->authInfo['loginType'] === 'FE' && $this->settings['enableFrontend']||
+            $this->authInfo['loginType'] === 'BE' && $this->settings['enableBackend'])
         ) {
             return true;
         }
@@ -134,7 +134,7 @@ class AuthenticationService extends AbstractAuthenticationService
         $ip = GeneralUtility::getIndpEnv('REMOTE_ADDR');
         $username = $this->login['uname'];
 
-        if ($this->getBanRepository()->findActiveBan($ip, $username, $this->settings['bantime']['value'])) {
+        if ($this->getBanRepository()->findActiveBan($ip, $username, $this->settings['bantime'])) {
             return true;
         }
 
