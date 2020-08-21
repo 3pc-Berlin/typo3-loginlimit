@@ -13,9 +13,6 @@ return [
         'searchFields' => 'ip,username',
 
     ],
-    'interface' => [
-        'showRecordFieldList' => 'tstamp,username,ip'
-    ],
     'columns' => [
         'tstamp' => [
             'label' => 'LLL:EXT:loginlimit/Resources/Private/Language/locallang.xlf:tstamp',

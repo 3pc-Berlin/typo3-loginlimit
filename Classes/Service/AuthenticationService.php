@@ -15,15 +15,14 @@ namespace WebentwicklerAt\Loginlimit\Service;
  * The TYPO3 project - inspiring people to share!
  */
 
+use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Domain\Repository\PageRepository;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
-use TYPO3\CMS\Frontend\Page\PageRepository;
-use TYPO3\CMS\Sv\AbstractAuthenticationService;
 use WebentwicklerAt\Loginlimit\Domain\Repository\BanRepository;
 use WebentwicklerAt\Loginlimit\Domain\Repository\LoginAttemptRepository;
-use WebentwicklerAt\Loginlimit\Service\CleanUpService;
 
 /**
  * Service avoids authentication after ban
@@ -65,7 +64,7 @@ class AuthenticationService extends AbstractAuthenticationService
      *
      * @return boolean
      */
-    public function init()
+    public function init(): bool
     {
         // in frontend TCA is not loaded
         if (TYPO3_MODE === 'FE') {

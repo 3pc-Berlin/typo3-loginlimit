@@ -27,4 +27,4 @@ call_user_func(function ($_EXTKEY) {
     if (TYPO3_MODE === 'BE') {
         $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['extbase']['commandControllers'][] = \WebentwicklerAt\Loginlimit\Command\TaskCommandController::class;
     }
-}, $_EXTKEY);
+}, 'loginlimit');
