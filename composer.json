@@ -5,7 +5,6 @@
     "homepage": "https://github.com/WebentwicklerAt/typo3-loginlimit",
     "type": "typo3-cms-extension",
     "license": "GPL-2.0+",
-    "version": "9.0.2",
     "authors": [
         {
             "name": "Gernot Leitgab",
@@ -23,6 +22,11 @@
     "autoload": {
         "psr-4": {
             "WebentwicklerAt\\Loginlimit\\": "Classes/"
+        }
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "loginlimit"
         }
     }
 }
