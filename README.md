@@ -43,3 +43,7 @@ First of all please make sure that you have installed and set-up the extension "
 In module "Scheduler" add a new task, select "Extbase CommandController Task" as "Class", set desired "Frequency" and select "Loginlimit Task: cleanUp" as "CommandController Command".
 
 If clean-up is done through scheduler task, the option "enableCleanUpAtLogin" in extension configuration should be disabled.
+
+You can also run cleanup via CLI
+
+    vendor/bin/typo3 loginlimit:cleanup
