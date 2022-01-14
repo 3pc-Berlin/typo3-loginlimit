@@ -17,7 +17,6 @@ namespace WebentwicklerAt\Loginlimit\Service;
 
 use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Domain\Repository\PageRepository;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
@@ -70,9 +69,6 @@ class AuthenticationService extends AbstractAuthenticationService
         if (TYPO3_MODE === 'FE') {
             if ($GLOBALS['TCA'] === null) {
                 ExtensionManagementUtility::loadBaseTca(false);
-            }
-            if (!$GLOBALS['TSFE']->sys_page instanceof PageRepository) {
-                $GLOBALS['TSFE']->sys_page = GeneralUtility::makeInstance(PageRepository::class);
             }
         }
 
